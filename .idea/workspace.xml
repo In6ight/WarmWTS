@@ -5,8 +5,63 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="95c1401d-64f6-498e-aea9-b905dc45d977" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/core/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/core/account_manager.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/core/models/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/core/models/account.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/core/models/proxy.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/core/models/stats.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/core/proxy_handler.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/core/utils/helpers.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/core/warming_engine.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/data/accounts.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/gui/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/gui/styles/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/gui/styles/animations.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/gui/styles/base_style.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/gui/styles/dark_theme.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/gui/tabs/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/gui/tabs/accounts_tab.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/gui/tabs/logs_tab.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/gui/tabs/settings_tab.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/gui/tabs/warming_tab.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/gui/widgets/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/gui/widgets/account_card.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/gui/widgets/phrase_editor.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/gui/widgets/proxy_dialog.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/gui/window.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/logs/api.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/logs/app.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/logs/backups/api.log.1" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/logs/backups/app.log.1" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/logs/errors.log.gz" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/setup.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/utils/file_manager.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/ui/main_window.py" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/ui/main_window.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/config.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/models/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/models/account.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/models/proxy.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/ui/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/ui/dialogs/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/ui/dialogs/code_dialog.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/ui/dialogs/proxy_dialog.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/ui/main_window.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/ui/widgets/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/ui/widgets/account_widget.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/ui/widgets/phrase_widget.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/utils/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/utils/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/utils/file_operations.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/utils/helpers.py" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/utils/helpers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/utils/logger.py" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/utils/logger.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/workers/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/workers/selenium_manager.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/workers/web_view.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/workers/whatsapp_worker.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,6 +112,7 @@
 }</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\Projects\WarmWTS\whatsapp_warmer\core" />
       <recent name="D:\Projects\WarmWTS\whatsapp_warmer" />
     </key>
   </component>

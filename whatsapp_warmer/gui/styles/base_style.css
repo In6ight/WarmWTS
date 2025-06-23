@@ -1,0 +1,363 @@
+/* Базовые стили для всего приложения */
+QWidget {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 11pt;
+    color: #333333;
+    background-color: #FFFFFF;
+    selection-background-color: #3F51B5;
+    selection-color: #FFFFFF;
+}
+
+/* Главное окно */
+QMainWindow {
+    background-color: #F5F5F5;
+}
+
+/* Кнопки */
+QPushButton {
+    background-color: #E0E0E0;
+    border: 1px solid #BDBDBD;
+    border-radius: 4px;
+    padding: 5px 10px;
+    min-width: 80px;
+}
+
+QPushButton:hover {
+    background-color: #D5D5D5;
+}
+
+QPushButton:pressed {
+    background-color: #BDBDBD;
+}
+
+QPushButton:disabled {
+    background-color: #EEEEEE;
+    color: #9E9E9E;
+}
+
+/* Специальные кнопки */
+QPushButton#startButton {
+    background-color: #4CAF50;
+    color: white;
+}
+
+QPushButton#startButton:hover {
+    background-color: #43A047;
+}
+
+QPushButton#stopButton {
+    background-color: #F44336;
+    color: white;
+}
+
+QPushButton#stopButton:hover {
+    background-color: #E53935;
+}
+
+/* Вкладки */
+QTabWidget::pane {
+    border: 1px solid #E0E0E0;
+    border-radius: 4px;
+    margin: 5px;
+    padding: 5px;
+    background: white;
+}
+
+QTabBar::tab {
+    background: #E0E0E0;
+    border: 1px solid #BDBDBD;
+    border-bottom: none;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    padding: 5px 10px;
+    margin-right: 2px;
+}
+
+QTabBar::tab:selected {
+    background: white;
+    border-bottom: 1px solid white;
+    margin-bottom: -1px;
+}
+
+QTabBar::tab:hover {
+    background: #D5D5D5;
+}
+
+/* Списки */
+QListWidget {
+    background: white;
+    border: 1px solid #E0E0E0;
+    border-radius: 4px;
+    padding: 2px;
+    outline: 0;
+}
+
+QListWidget::item {
+    padding: 5px;
+    border-bottom: 1px solid #EEEEEE;
+}
+
+QListWidget::item:selected {
+    background-color: #3F51B5;
+    color: white;
+    border-radius: 2px;
+}
+
+QListWidget::item:hover {
+    background-color: #E3F2FD;
+}
+
+/* Текстовые поля */
+QLineEdit, QTextEdit, QPlainTextEdit {
+    border: 1px solid #BDBDBD;
+    border-radius: 4px;
+    padding: 5px;
+    background: white;
+    selection-background-color: #3F51B5;
+    selection-color: white;
+}
+
+QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {
+    border: 1px solid #3F51B5;
+}
+
+/* Чекбоксы и радиокнопки */
+QCheckBox, QRadioButton {
+    spacing: 5px;
+}
+
+QCheckBox::indicator, QRadioButton::indicator {
+    width: 16px;
+    height: 16px;
+}
+
+QCheckBox::indicator {
+    border: 1px solid #BDBDBD;
+    border-radius: 2px;
+    background: white;
+}
+
+QCheckBox::indicator:checked {
+    background: #3F51B5;
+    image: url(assets/icons/checkmark.png);
+}
+
+QRadioButton::indicator {
+    border: 1px solid #BDBDBD;
+    border-radius: 8px;
+    background: white;
+}
+
+QRadioButton::indicator:checked {
+    border: 5px solid #3F51B5;
+}
+
+/* Комбобоксы */
+QComboBox {
+    border: 1px solid #BDBDBD;
+    border-radius: 4px;
+    padding: 5px;
+    min-width: 100px;
+    background: white;
+}
+
+QComboBox:hover {
+    border-color: #9E9E9E;
+}
+
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 20px;
+    border-left: 1px solid #BDBDBD;
+}
+
+QComboBox::down-arrow {
+    image: url(assets/icons/down_arrow.png);
+}
+
+QComboBox QAbstractItemView {
+    border: 1px solid #BDBDBD;
+    selection-background-color: #3F51B5;
+    selection-color: white;
+    background: white;
+}
+
+/* Прогресс-бар */
+QProgressBar {
+    border: 1px solid #BDBDBD;
+    border-radius: 4px;
+    text-align: center;
+    background: white;
+}
+
+QProgressBar::chunk {
+    background-color: #3F51B5;
+    border-radius: 3px;
+}
+
+/* Скроллбары */
+QScrollBar:vertical {
+    border: none;
+    background: #F5F5F5;
+    width: 10px;
+    margin: 0;
+}
+
+QScrollBar::handle:vertical {
+    background: #BDBDBD;
+    min-height: 20px;
+    border-radius: 4px;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    background: none;
+}
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+/* Группы */
+QGroupBox {
+    border: 1px solid #E0E0E0;
+    border-radius: 4px;
+    margin-top: 10px;
+    padding-top: 15px;
+    font-weight: bold;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 10px;
+    padding: 0 3px;
+}
+
+/* Статус-бар */
+QStatusBar {
+    background: #E0E0E0;
+    border-top: 1px solid #BDBDBD;
+    padding: 3px;
+}
+
+QStatusBar::item {
+    border: none;
+}
+
+/* Диалоги */
+QDialog {
+    background: #FAFAFA;
+}
+
+QDialog QLabel {
+    font-size: 10pt;
+    color: #616161;
+}
+
+/* Аккордеон */
+QToolButton {
+    border: none;
+    text-align: left;
+    padding: 5px;
+    font-weight: bold;
+}
+
+QToolButton::menu-button {
+    width: 0px;
+}
+
+QToolButton::down-arrow {
+    image: none;
+}
+
+/* Тултипы */
+QToolTip {
+    background-color: #212121;
+    color: white;
+    border: 1px solid #424242;
+    border-radius: 2px;
+    padding: 3px;
+}
+
+/* Темная тема */
+[data-theme="dark"] QWidget {
+    background-color: #212121;
+    color: #E0E0E0;
+}
+
+[data-theme="dark"] QMainWindow {
+    background-color: #303030;
+}
+
+[data-theme="dark"] QPushButton {
+    background-color: #424242;
+    border-color: #616161;
+    color: #E0E0E0;
+}
+
+[data-theme="dark"] QPushButton:hover {
+    background-color: #616161;
+}
+
+[data-theme="dark"] QPushButton:pressed {
+    background-color: #757575;
+}
+
+[data-theme="dark"] QTabWidget::pane {
+    background: #424242;
+    border-color: #616161;
+}
+
+[data-theme="dark"] QTabBar::tab {
+    background: #424242;
+    border-color: #616161;
+    color: #E0E0E0;
+}
+
+[data-theme="dark"] QTabBar::tab:selected {
+    background: #303030;
+    border-bottom-color: #303030;
+}
+
+[data-theme="dark"] QListWidget {
+    background: #424242;
+    border-color: #616161;
+    color: #E0E0E0;
+}
+
+[data-theme="dark"] QListWidget::item {
+    border-bottom-color: #616161;
+}
+
+[data-theme="dark"] QListWidget::item:hover {
+    background-color: #616161;
+}
+
+[data-theme="dark"] QListWidget::item:selected {
+    background-color: #3F51B5;
+}
+
+[data-theme="dark"] QLineEdit,
+[data-theme="dark"] QTextEdit,
+[data-theme="dark"] QPlainTextEdit {
+    background: #424242;
+    border-color: #616161;
+    color: #E0E0E0;
+}
+
+[data-theme="dark"] QComboBox {
+    background: #424242;
+    border-color: #616161;
+    color: #E0E0E0;
+}
+
+[data-theme="dark"] QComboBox QAbstractItemView {
+    background: #424242;
+    border-color: #616161;
+    color: #E0E0E0;
+}
+
+[data-theme="dark"] QStatusBar {
+    background: #424242;
+    border-color: #616161;
+}

@@ -1,15 +1,12 @@
 """
-WhatsApp Account Warmer PRO
-Automated warming tool for WhatsApp accounts
+WhatsApp Account Warmer PRO - система прогрева аккаунтов WhatsApp
+
+Основные модули:
+- core: Ядро системы (логика работы)
+- gui: Графический интерфейс
+- utils: Вспомогательные утилиты
+
+Версия: 1.0.0
 """
-
 __version__ = "1.0.0"
-__author__ = "Your Name"
-__license__ = "MIT"
-
-from pathlib import Path
-
-# Экспорт основных компонентов
-
-# Пути для импорта
-PACKAGE_DIR = Path(__file__).parent
+__author__ = "InSight"
