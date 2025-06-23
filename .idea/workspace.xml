@@ -5,34 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="95c1401d-64f6-498e-aea9-b905dc45d977" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/WarmWTS.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/config.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/models/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/models/account.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/models/proxy.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/ui/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/ui/dialogs/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/ui/dialogs/code_dialog.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/ui/dialogs/proxy_dialog.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/ui/main_window.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/ui/widgets/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/ui/widgets/account_widget.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/ui/widgets/phrase_widget.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/utils/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/utils/file_operations.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/utils/helpers.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/utils/logger.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/workers/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/workers/selenium_manager.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/workers/web_view.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/workers/whatsapp_worker.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/ui/main_window.py" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/ui/main_window.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,12 +23,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/In6ight/WarmWTS.git",
-    "accountId": "d9e9db4b-b1e0-4e75-ad3f-ecef3bb25bef"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;In6ight&quot;
   }
-}]]></component>
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/In6ight/WarmWTS.git&quot;,
+    &quot;accountId&quot;: &quot;d9e9db4b-b1e0-4e75-ad3f-ecef3bb25bef&quot;
+  }
+}</component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 0
 }</component>
@@ -64,17 +44,17 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.main.executor": "Run",
-    "Python.main_window.executor": "Run",
-    "Python.setup.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "master",
-    "settings.editor.selected.configurable": "preferences.pluginManager"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main_window.executor&quot;: &quot;Run&quot;,
+    &quot;Python.setup.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\Projects\WarmWTS\whatsapp_warmer" />
