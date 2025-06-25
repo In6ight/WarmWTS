@@ -3,29 +3,33 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
-from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtCore import QObject, pyqtSignal, QTimer
 from typing import List, Dict, Optional
 import time
 import random
 import logging
 from whatsapp_warmer.core.models.account import WhatsAppAccount
+from whatsapp_warmer.utils.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class WarmingEngine(QObject):
-    """Движок прогрева аккаунтов WhatsApp через Selenium"""
-
     progress_updated = pyqtSignal(int, str)  # percent, status
     account_activity = pyqtSignal(str, str)  # phone, activity
     error_occurred = pyqtSignal(str, str)  # context, error
     warming_completed = pyqtSignal(bool)  # success
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, account_manager=None, proxy_handler=None, parent=None):
+        super().__init__(parent)
+        self.account_manager = account_manager
+        self.proxy_handler = proxy_handler
         self._running = False
         self._paused = False
         self._current_round = 0
+        self._active_accounts = []
+        self._drivers = {}
+
         self.settings = {
             'rounds': 3,
             'min_delay': 15,
@@ -34,53 +38,13 @@ class WarmingEngine(QObject):
             'round_delay': 120,
             'strategy': 'random_pairs'
         }
-        self._active_accounts: List[WhatsAppAccount] = []
-        self._drivers: Dict[str, webdriver.Chrome] = {}
-
-    def update_settings(self, settings: Dict):
-        """Обновление настроек прогрева"""
-        self.settings.update(settings)
-
-    def start_warming(self, accounts: List[WhatsAppAccount]):
-        """Запуск прогрева аккаунтов"""
-        if self._running:
-            logger.warning("Прогрев уже запущен")
-            return
-
-        self._running = True
-        self._active_accounts = [acc for acc in accounts if acc.enabled]
-
-        try:
-            self._run_warming_cycle()
-        except Exception as e:
-            logger.error(f"Ошибка прогрева: {str(e)}")
-            self.error_occurred.emit("global", str(e))
-            self.stop_warming()
-
-    def _run_warming_cycle(self):
-        """Основной цикл прогрева"""
-        for round_num in range(1, self.settings['rounds'] + 1):
-            if not self._running:
-                break
-
-            self._current_round = round_num
-            status = f"Раунд {round_num}/{self.settings['rounds']}"
-            self.progress_updated.emit(
-                int((round_num / self.settings['rounds']) * 100),
-                status
-            )
-
-            self._process_round()
-
-            if round_num < self.settings['rounds']:
-                self._wait_with_checks(self.settings['round_delay'])
-
-        self.warming_completed.emit(self._running)
-        self._running = False
 
     def _process_round(self):
         """Обработка одного раунда прогрева"""
-        accounts = random.sample(self._active_accounts, min(2, len(self._active_accounts)))
+        accounts = random.sample(
+            self._active_accounts,
+            min(2, len(self._active_accounts))
+        )  # Закрывающая скобка добавлена здесь
 
         for account in accounts:
             if not self._running:
@@ -97,7 +61,6 @@ class WarmingEngine(QObject):
         driver = self._init_driver(account)
 
         try:
-            # Пример действий для прогрева
             self._open_whatsapp_web(driver, account)
             self._send_test_messages(driver, account)
 
@@ -110,11 +73,13 @@ class WarmingEngine(QObject):
             self._drivers.pop(account.phone, None)
 
     def _init_driver(self, account: WhatsAppAccount) -> webdriver.Chrome:
-        """Инициализация Selenium WebDriver с настройками прокси"""
+        """Инициализация WebDriver с настройками прокси"""
         options = webdriver.ChromeOptions()
 
-        if account.proxy:
-            options.add_argument(f"--proxy-server={account.proxy.get_formatted()}")
+        if account.proxy and self.proxy_handler:
+            proxy = self.proxy_handler.get_proxy_for_account(account)
+            if proxy:
+                options.add_argument(f"--proxy-server={proxy.get_formatted()}")
 
         driver = webdriver.Chrome(
             ChromeDriverManager().install(),
@@ -137,7 +102,6 @@ class WarmingEngine(QObject):
 
     def _send_test_messages(self, driver: webdriver.Chrome, account: WhatsAppAccount):
         """Отправка тестовых сообщений"""
-        # Реализация стратегий прогрева
         if self.settings['strategy'] == 'random_pairs':
             self._send_random_messages(driver, account)
 
@@ -174,7 +138,7 @@ class WarmingEngine(QObject):
             time.sleep(1)
 
     def stop_warming(self):
-        """Остановка прогрева"""
+        """Экстренная остановка прогрева"""
         self._running = False
         for driver in self._drivers.values():
             try:
@@ -182,8 +146,19 @@ class WarmingEngine(QObject):
             except:
                 pass
         self._drivers.clear()
+        logger.info("Прогрев принудительно остановлен")
 
     def toggle_pause(self):
         """Пауза/продолжение прогрева"""
         self._paused = not self._paused
+        status = "на паузе" if self._paused else "продолжен"
+        logger.info(f"Прогрев {status}")
+        return self._paused
+
+    def is_running(self) -> bool:
+        """Проверка активности прогрева"""
+        return self._running
+
+    def is_paused(self) -> bool:
+        """Проверка состояния паузы"""
         return self._paused

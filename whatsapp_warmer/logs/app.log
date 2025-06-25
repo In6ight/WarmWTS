@@ -1,0 +1,5 @@
+2025-06-24 14:01:12,164 - whatsapp_warmer.gui.window.MainWindow - DEBUG - Инициализация UI
+2025-06-24 14:01:13,984 - whatsapp_warmer.gui.window.MainWindow - DEBUG - Инициализация компонентов
+2025-06-24 14:07:44,795 - whatsapp_warmer.core.account_manager - INFO - Файл хранилища пуст
+2025-06-24 14:07:44,831 - whatsapp_warmer.gui.window.MainWindow - DEBUG - Инициализация UI
+2025-06-24 14:07:45,854 - whatsapp_warmer.gui.window.MainWindow - DEBUG - Инициализация компонентов
