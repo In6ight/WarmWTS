@@ -1,10 +1,12 @@
 from PyQt6.QtWidgets import (
     QDialog, QFormLayout, QLineEdit, QComboBox,
-    QDialogButtonBox, QMessageBox, QSpinBox
+    QDialogButtonBox, QMessageBox, QSpinBox, QVBoxLayout,
+    QLabel, QTextEdit
 )
 from PyQt6.QtCore import Qt
+from typing import Dict, Any, Optional
 from whatsapp_warmer.utils.helpers import validate_phone
-from typing import Optional, Dict, Any
+
 
 class AccountDialog(QDialog):
     def __init__(self, proxy_handler=None, parent=None, account=None):
@@ -14,7 +16,6 @@ class AccountDialog(QDialog):
         self._init_ui()
 
     def _init_ui(self):
-        """Инициализация интерфейса"""
         self.setWindowTitle("Редактировать аккаунт" if self.account else "Добавить аккаунт")
         self.setMinimumWidth(400)
 
@@ -26,7 +27,7 @@ class AccountDialog(QDialog):
         self.phone_edit.setPlaceholderText("79XXXXXXXXX")
         if self.account:
             self.phone_edit.setText(self.account.phone)
-            self.phone_edit.setEnabled(False)  # Запрещаем менять номер при редактировании
+            self.phone_edit.setEnabled(False)
         layout.addRow("Номер телефона:", self.phone_edit)
 
         # Прокси (если есть обработчик)
@@ -44,25 +45,22 @@ class AccountDialog(QDialog):
         layout.addRow(buttons)
 
     def _load_proxies(self):
-        """Загрузка доступных прокси в комбобокс"""
         self.proxy_combo.clear()
         self.proxy_combo.addItem("Без прокси", None)
 
         if self.proxy_handler:
             for proxy in self.proxy_handler.get_all_proxies():
                 self.proxy_combo.addItem(
-                    f"{proxy.host}:{proxy.port} ({proxy.type})",
+                    f"{proxy.host}:{proxy.port} ({proxy.protocol})",
                     proxy
                 )
 
-        # Установка текущего прокси для редактирования
         if self.account and self.account.proxy:
             index = self.proxy_combo.findData(self.account.proxy)
             if index >= 0:
                 self.proxy_combo.setCurrentIndex(index)
 
     def _validate_and_accept(self):
-        """Валидация данных перед принятием"""
         phone = self.phone_edit.text().strip()
 
         if not phone:
@@ -76,7 +74,6 @@ class AccountDialog(QDialog):
         self.accept()
 
     def get_data(self) -> dict:
-        """Получение данных из формы"""
         data = {
             'phone': self.phone_edit.text().strip(),
             'enabled': True
@@ -88,23 +85,115 @@ class AccountDialog(QDialog):
         return data
 
 
-class ProxyDialog(QDialog):
-    """Диалоговое окно для добавления/редактирования прокси"""
+class SettingsDialog(QDialog):
+    def __init__(self, config: Dict[str, Any], parent=None):
+        super().__init__(parent)
+        self.config = config
+        self._init_ui()
 
+    def _init_ui(self):
+        self.setWindowTitle("Настройки")
+        self.setMinimumWidth(500)
+
+        layout = QVBoxLayout()
+        form = QFormLayout()
+
+        # Настройки прогрева
+        self.rounds_spin = QSpinBox()
+        self.rounds_spin.setRange(1, 10)
+        self.rounds_spin.setValue(self.config['warming'].get('rounds', 3))
+        form.addRow("Количество раундов:", self.rounds_spin)
+
+        self.min_delay_spin = QSpinBox()
+        self.min_delay_spin.setRange(5, 300)
+        self.min_delay_spin.setValue(self.config['warming'].get('min_delay', 15))
+        form.addRow("Минимальная задержка (сек):", self.min_delay_spin)
+
+        self.max_delay_spin = QSpinBox()
+        self.max_delay_spin.setRange(5, 300)
+        self.max_delay_spin.setValue(self.config['warming'].get('max_delay', 45))
+        form.addRow("Максимальная задержка (сек):", self.max_delay_spin)
+
+        self.messages_spin = QSpinBox()
+        self.messages_spin.setRange(1, 20)
+        self.messages_spin.setValue(self.config['warming'].get('messages_per_round', 2))
+        form.addRow("Сообщений за раунд:", self.messages_spin)
+
+        # Общие настройки
+        self.tray_check = QComboBox()
+        self.tray_check.addItems(["Да", "Нет"])
+        self.tray_check.setCurrentIndex(0 if self.config.get('minimize_to_tray', True) else 1)
+        form.addRow("Сворачивать в трей:", self.tray_check)
+
+        layout.addLayout(form)
+
+        # Кнопки
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+        self.setLayout(layout)
+
+    def get_config(self) -> Dict[str, Any]:
+        return {
+            'window_maximized': self.config['window_maximized'],
+            'window_geometry': self.config['window_geometry'],
+            'minimize_to_tray': self.tray_check.currentIndex() == 0,
+            'warming': {
+                'rounds': self.rounds_spin.value(),
+                'min_delay': self.min_delay_spin.value(),
+                'max_delay': self.max_delay_spin.value(),
+                'messages_per_round': self.messages_spin.value(),
+                'round_delay': self.config['warming'].get('round_delay', 120)
+            }
+        }
+
+
+class AboutDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._init_ui()
+
+    def _init_ui(self):
+        self.setWindowTitle("О программе")
+        self.setFixedSize(400, 300)
+
+        layout = QVBoxLayout()
+
+        title = QLabel("WhatsApp Warmer PRO")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title.setStyleSheet("font-size: 18px; font-weight: bold;")
+        layout.addWidget(title)
+
+        version = QLabel("Версия 1.0.0")
+        version.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(version)
+
+        desc = QTextEdit()
+        desc.setReadOnly(True)
+        desc.setPlainText(
+            "Программа для прогрева аккаунтов WhatsApp.\n\n"
+            "Автор: Ваше имя\n"
+            "Контакты: ваш@email.com"
+        )
+        layout.addWidget(desc)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
+        buttons.accepted.connect(self.accept)
+        layout.addWidget(buttons)
+
+        self.setLayout(layout)
+
+
+class ProxyDialog(QDialog):
     def __init__(self, proxy_handler, parent=None, proxy=None):
-        """
-        Args:
-            proxy_handler: Обработчик прокси
-            parent: Родительский виджет
-            proxy: Существующий прокси для редактирования (None для создания нового)
-        """
         super().__init__(parent)
         self.proxy_handler = proxy_handler
         self.proxy = proxy
         self._init_ui()
 
     def _init_ui(self):
-        """Инициализация интерфейса"""
         self.setWindowTitle("Редактировать прокси" if self.proxy else "Добавить прокси")
         self.setMinimumWidth(400)
 
@@ -113,7 +202,7 @@ class ProxyDialog(QDialog):
 
         # Тип прокси
         self.type_combo = QComboBox()
-        self.type_combo.addItems(["HTTP", "SOCKS4", "SOCKS5"])
+        self.type_combo.addItems(["http", "socks4", "socks5"])
         layout.addRow("Тип:", self.type_combo)
 
         # Хост
@@ -126,23 +215,23 @@ class ProxyDialog(QDialog):
         self.port_edit.setRange(1, 65535)
         layout.addRow("Порт:", self.port_edit)
 
-        # Логин (опционально)
+        # Логин
         self.login_edit = QLineEdit()
         self.login_edit.setPlaceholderText("Необязательно")
         layout.addRow("Логин:", self.login_edit)
 
-        # Пароль (опционально)
+        # Пароль
         self.password_edit = QLineEdit()
         self.password_edit.setPlaceholderText("Необязательно")
         self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
         layout.addRow("Пароль:", self.password_edit)
 
-        # Заполняем данные для редактирования
+        # Заполнение данных при редактировании
         if self.proxy:
-            self.type_combo.setCurrentText(self.proxy.type.upper())
+            self.type_combo.setCurrentText(self.proxy.protocol)
             self.host_edit.setText(self.proxy.host)
             self.port_edit.setValue(self.proxy.port)
-            self.login_edit.setText(self.proxy.login or "")
+            self.login_edit.setText(self.proxy.username or "")
             self.password_edit.setText(self.proxy.password or "")
 
         # Кнопки
@@ -154,7 +243,6 @@ class ProxyDialog(QDialog):
         layout.addRow(buttons)
 
     def _validate_and_accept(self):
-        """Валидация данных перед принятием"""
         host = self.host_edit.text().strip()
 
         if not host:
@@ -164,41 +252,10 @@ class ProxyDialog(QDialog):
         self.accept()
 
     def get_data(self) -> dict:
-        """Получение данных прокси из формы"""
         return {
-            'type': self.type_combo.currentText().lower(),
+            'protocol': self.type_combo.currentText(),
             'host': self.host_edit.text().strip(),
             'port': self.port_edit.value(),
-            'login': self.login_edit.text().strip() or None,
+            'username': self.login_edit.text().strip() or None,
             'password': self.password_edit.text().strip() or None
-        }
-
-
-class ImportDialog(QDialog):
-    """Диалог импорта аккаунтов"""
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self._init_ui()
-
-    def _init_ui(self):
-        self.setWindowTitle("Импорт аккаунтов")
-        layout = QFormLayout()
-        self.setLayout(layout)
-
-        # TODO: Реализация формы импорта
-        # Можно добавить выбор файла, формата и опций
-
-        buttons = QDialogButtonBox()
-        buttons.addButton("Импорт", QDialogButtonBox.ButtonRole.AcceptRole)
-        buttons.addButton("Отмена", QDialogButtonBox.ButtonRole.RejectRole)
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        layout.addRow(buttons)
-
-    def get_import_options(self) -> dict:
-        """Получение параметров импорта"""
-        return {
-            'format': 'json',  # Может быть csv, json и т.д.
-            'options': {}
         }

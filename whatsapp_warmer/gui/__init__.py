@@ -10,4 +10,4 @@
 from .window import MainWindow
 from .tabs import AccountsTab, WarmingTab, LogsTab
 
-__all__ = ['MainWindow', 'AccountsTab', 'WarmingTab', 'LogsTab']
+__all__ = ['MainWindow', 'AccountsTab', 'WarmingTab', 'LogsTab' 'SettingsDialog', 'AboutDialog']

@@ -1,9 +1,16 @@
-from .logger import setup_logger, get_logger
-from .helpers import validate_phone, validate_proxy  # Только нужные функции
+# whatsapp_warmer/utils/__init__.py
+from .helpers import (
+    get_app_data_dir,
+    get_resource_path,
+    validate_phone,
+    ensure_directory_exists,
+    setup_logging
+)
 
 __all__ = [
-    'setup_logger',
-    'get_logger',
+    'get_app_data_dir',
+    'get_resource_path',
     'validate_phone',
-    'validate_proxy'  # Добавляем валидацию прокси
+    'ensure_directory_exists',
+    'setup_logging'
 ]

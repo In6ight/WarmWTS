@@ -1,205 +1,159 @@
-import logging
-import sys
-from pathlib import Path
-from typing import Optional, Dict, Any
-from PyQt6.QtWidgets import (QMainWindow, QTabWidget, QVBoxLayout, QWidget,
-                            QStatusBar, QMessageBox, QMenu, QSystemTrayIcon,
-                            QApplication)
-from PyQt6.QtCore import pyqtSignal, Qt, QTimer, QByteArray
+from PyQt6.QtWidgets import (
+    QMainWindow, QTabWidget, QVBoxLayout, QWidget,
+    QStatusBar, QSystemTrayIcon, QMenu, QMessageBox
+)
+from PyQt6.QtCore import pyqtSignal, Qt, QTimer
 from PyQt6.QtGui import QIcon, QAction, QCloseEvent
-from whatsapp_warmer.utils.logger import get_logger
+import logging
+from typing import Dict, Optional, Any
+
 from whatsapp_warmer.core.account_manager import AccountManager
 from whatsapp_warmer.core.proxy_handler import ProxyHandler
 from whatsapp_warmer.core.warming_engine import WarmingEngine
-from whatsapp_warmer.gui.tabs import AccountsTab, WarmingTab, LogsTab
-from whatsapp_warmer.gui.dialogs import SettingsDialog, AboutDialog
-from whatsapp_warmer.utils.helpers import (get_resource_path, validate_config, safe_json_io, create_shortcut)
+from whatsapp_warmer.utils.helpers import get_resource_path, safe_json_io
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class MainWindow(QMainWindow):
-    """Главное окно приложения WhatsApp Account Warmer PRO"""
-
-    # Сигналы
     app_closing = pyqtSignal()
     settings_changed = pyqtSignal(dict)
     proxy_updated = pyqtSignal(list)
 
-    def __init__(self,
-                 account_manager: AccountManager,
-                 proxy_handler: Optional[ProxyHandler] = None,
+    def __init__(self, account_manager: AccountManager,
+                 proxy_handler: ProxyHandler,
                  config: Optional[Dict[str, Any]] = None,
-                 parent: Optional[QWidget] = None):
-        """
-        Args:
-            account_manager: Менеджер аккаунтов
-            proxy_handler: Обработчик прокси (опционально)
-            config: Конфигурация приложения (опционально)
-            parent: Родительский виджет (опционально)
-        """
+                 parent=None):
         super().__init__(parent)
-        self._setup_initial_state(account_manager, proxy_handler, config)
-        self._initialize_ui()
-        self._setup_tray_icon()
-        self._setup_auto_save()
-        logger.info("MainWindow initialized successfully")
 
-    def _setup_initial_state(self, account_manager: AccountManager,
-                           proxy_handler: Optional[ProxyHandler],
-                           config: Optional[Dict[str, Any]]) -> None:
-        """Инициализация начального состояния"""
+        # Инициализация с проверкой параметров
+        if not isinstance(account_manager, AccountManager):
+            raise ValueError("account_manager must be AccountManager instance")
+        if not isinstance(proxy_handler, ProxyHandler):
+            raise ValueError("proxy_handler must be ProxyHandler instance")
+
         self.account_manager = account_manager
-        self.proxy_handler = proxy_handler or ProxyHandler()
-        self.config = validate_config(config or {})
-        self.tray_icon: Optional[QSystemTrayIcon] = None
+        self.proxy_handler = proxy_handler
+        self.config = config or {}
+        self.tray_icon = None
         self._pending_operations = 0
 
-        # Валидация входных параметров
-        if not isinstance(self.account_manager, AccountManager):
-            raise TypeError("account_manager must be an AccountManager instance")
-        if not isinstance(self.proxy_handler, ProxyHandler):
-            raise TypeError("proxy_handler must be a ProxyHandler instance")
+        # Настройка интерфейса
+        self._init_ui()
+        self._setup_tray_icon()
+        self._setup_auto_save()
 
-    def _initialize_ui(self) -> None:
+        # Инициализация движка прогрева (исправленная версия)
+        self._init_warming_engine()
+
+        # Восстановление состояния
+        self._load_window_state()
+        logger.info("Main window initialized")
+
+    def _init_ui(self):
         """Инициализация пользовательского интерфейса"""
-        self.setWindowTitle("WhatsApp Account Warmer PRO")
-        self.setWindowIcon(QIcon(get_resource_path('icons/app.png')))
+        self.setWindowTitle("WhatsApp Warmer PRO")
         self.resize(1200, 800)
         self.setMinimumSize(800, 600)
 
         # Центральный виджет
-        self.central_widget = QWidget()
-        self.setCentralWidget(self.central_widget)
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
 
         # Основной лейаут
-        self.main_layout = QVBoxLayout()
-        self.main_layout.setContentsMargins(5, 5, 5, 5)
-        self.central_widget.setLayout(self.main_layout)
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(5, 5, 5, 5)
+        central_widget.setLayout(main_layout)
 
-        # Инициализация компонентов
-        self._init_tabs()
-        self._init_status_bar()
-        self._init_menu_bar()
-        self._init_warming_engine()
-        self._connect_signals()
-
-    def _init_tabs(self) -> None:
-        """Инициализация вкладок"""
+        # Вкладки
         self.tab_widget = QTabWidget()
-        self.main_layout.addWidget(self.tab_widget)
+        main_layout.addWidget(self.tab_widget)
 
-        # Создание вкладок
-        self.accounts_tab = AccountsTab(
-            account_manager=self.account_manager,
-            proxy_handler=self.proxy_handler
-        )
-        self.warming_tab = WarmingTab(
-            account_manager=self.account_manager
-        )
-        self.logs_tab = LogsTab()
-
-        # Добавление вкладок
-        self.tab_widget.addTab(self.accounts_tab, "Аккаунты")
-        self.tab_widget.addTab(self.warming_tab, "Прогрев")
-        self.tab_widget.addTab(self.logs_tab, "Логи")
-
-    def _init_status_bar(self) -> None:
-        """Инициализация статус-бара"""
+        # Статус бар
         self.status_bar = QStatusBar()
-        self.status_bar.setStyleSheet("QStatusBar{padding-left:8px;}")
         self.setStatusBar(self.status_bar)
-        self.show_status_message("Готов к работе")
+        self.show_status_message("Ready")
 
-    def _init_menu_bar(self) -> None:
+        # Меню
+        self._init_menu_bar()
+
+    def _init_warming_engine(self):
+        """Безопасная инициализация движка прогрева"""
+        try:
+            self.warming_engine = WarmingEngine(
+                account_manager=self.account_manager,
+                proxy_handler=self.proxy_handler
+            )
+
+            # Попытка установки конфигурации, если метод доступен
+            if hasattr(self.warming_engine, 'update_settings'):
+                warming_config = self.config.get('warming', {})
+                default_config = {
+                    'rounds': 3,
+                    'min_delay': 15,
+                    'max_delay': 45,
+                    'messages_per_round': 2,
+                    'round_delay': 120
+                }
+                final_config = {**default_config, **warming_config}
+                self.warming_engine.update_settings(final_config)
+
+        except Exception as e:
+            logger.error(f"Failed to initialize warming engine: {e}")
+            self.warming_engine = None
+            QMessageBox.warning(
+                self,
+                "Warning",
+                "Warming engine initialized with limited functionality"
+            )
+
+    def _init_menu_bar(self):
         """Инициализация меню"""
         menubar = self.menuBar()
 
-        # Меню Файл
-        file_menu = menubar.addMenu("Файл")
-        self._add_menu_action(file_menu, "Настройки", self._open_settings, "Ctrl+,")
-        self._add_menu_action(file_menu, "Обновить прокси", self._update_proxies, "F5")
-        file_menu.addSeparator()
-        self._add_menu_action(file_menu, "Выход", self.close, "Ctrl+Q")
+        # Меню File
+        file_menu = menubar.addMenu("File")
+        self._add_menu_action(file_menu, "Exit", self.close, "Ctrl+Q")
 
-        # Меню Сервис
-        service_menu = menubar.addMenu("Сервис")
-        self._add_menu_action(service_menu, "Создать ярлык", self._create_shortcut)
-        service_menu.addSeparator()
-        self._add_menu_action(service_menu, "Проверить обновления", self._check_updates)
+        # Меню Settings
+        settings_menu = menubar.addMenu("Settings")
+        self._add_menu_action(settings_menu, "Preferences", self._open_settings)
 
-        # Меню Помощь
-        help_menu = menubar.addMenu("Помощь")
-        self._add_menu_action(help_menu, "Документация", self._show_docs, "F1")
-        help_menu.addSeparator()
-        self._add_menu_action(help_menu, "О программе", self._show_about)
-
-    def _init_warming_engine(self) -> None:
-        """Инициализация движка прогрева"""
-        self.warming_engine = WarmingEngine(
-            account_manager=self.account_manager,
-            proxy_handler=self.proxy_handler,
-            config=self.config.get('warming', {})
-        )
-
-    def _connect_signals(self) -> None:
-        """Подключение сигналов"""
-        # Аккаунты
-        self.accounts_tab.account_added.connect(
-            lambda: self.show_status_message("Аккаунт добавлен", 3000)
-        )
-        self.accounts_tab.account_updated.connect(
-            self._handle_account_update
-        )
-
-        # Прогрев
-        self.warming_engine.progress_updated.connect(
-            self.warming_tab.update_progress
-        )
-        self.warming_engine.account_activity.connect(
-            self._handle_account_activity
-        )
-        self.warming_engine.error_occurred.connect(
-            self._handle_warming_error
-        )
-
-        # Прокси
-        self.proxy_updated.connect(
-            self.accounts_tab.update_proxy_list
-        )
-
-    def _setup_tray_icon(self) -> None:
+    def _setup_tray_icon(self):
         """Настройка иконки в трее"""
         if not QSystemTrayIcon.isSystemTrayAvailable():
-            logger.warning("System tray not available")
             return
 
         try:
             self.tray_icon = QSystemTrayIcon(self)
-            self.tray_icon.setIcon(QIcon(get_resource_path('icons/tray.png')))
+
+            # Попытка загрузки иконки
+            try:
+                icon_path = get_resource_path('icons/tray.png')
+                if icon_path.exists():
+                    self.tray_icon.setIcon(QIcon(str(icon_path)))
+            except Exception as e:
+                logger.debug(f"Tray icon not loaded: {e}")
 
             # Меню трея
             tray_menu = QMenu()
-            self._add_menu_action(tray_menu, "Показать", self.show_normal)
-            self._add_menu_action(tray_menu, "Скрыть", self.hide)
-            tray_menu.addSeparator()
-            self._add_menu_action(tray_menu, "Выход", self.close)
+            self._add_menu_action(tray_menu, "Show", self.show_normal)
+            self._add_menu_action(tray_menu, "Exit", self.close)
 
             self.tray_icon.setContextMenu(tray_menu)
-            self.tray_icon.activated.connect(self._handle_tray_activation)
             self.tray_icon.show()
-        except Exception as e:
-            logger.error(f"Tray icon setup failed: {str(e)}")
 
-    def _setup_auto_save(self) -> None:
+        except Exception as e:
+            logger.error(f"Tray icon setup failed: {e}")
+
+    def _setup_auto_save(self):
         """Настройка автосохранения"""
         self.auto_save_timer = QTimer(self)
-        self.auto_save_timer.setInterval(60000)  # 1 минута
+        self.auto_save_timer.setInterval(30000)  # 30 секунд
         self.auto_save_timer.timeout.connect(self._save_all_data)
         self.auto_save_timer.start()
 
-    def _add_menu_action(self, menu: QMenu, text: str,
-                        handler: callable, shortcut: str = "") -> QAction:
+    def _add_menu_action(self, menu, text, handler, shortcut=""):
         """Добавление действия в меню"""
         action = QAction(text, self)
         action.triggered.connect(handler)
@@ -208,120 +162,64 @@ class MainWindow(QMainWindow):
         menu.addAction(action)
         return action
 
-    def _save_all_data(self) -> None:
+    def _save_all_data(self):
         """Сохранение всех данных"""
         try:
             self._pending_operations += 1
             self.account_manager.save_to_file()
             self.proxy_handler.save_to_file()
             self._save_window_state()
-            logger.debug("All data saved successfully")
         except Exception as e:
-            logger.error(f"Data save failed: {str(e)}")
+            logger.error(f"Data save failed: {e}")
         finally:
             self._pending_operations -= 1
 
-    def _save_window_state(self) -> None:
+    def _save_window_state(self):
         """Сохранение состояния окна"""
         self.config['window_maximized'] = self.isMaximized()
         if not self.isMaximized():
             self.config['window_geometry'] = bytes(self.saveGeometry())
 
-    def _load_window_state(self) -> None:
+    def _load_window_state(self):
         """Загрузка состояния окна"""
         try:
             if self.config.get('window_maximized', False):
                 self.showMaximized()
             elif 'window_geometry' in self.config:
-                self.restoreGeometry(QByteArray(self.config['window_geometry']))
+                self.restoreGeometry(self.config['window_geometry'])
         except Exception as e:
-            logger.warning(f"Window state load failed: {str(e)}")
+            logger.warning(f"Window state load failed: {e}")
 
-    def _open_settings(self) -> None:
+    def _open_settings(self):
         """Открытие диалога настроек"""
-        dialog = SettingsDialog(self.config, self)
-        if dialog.exec():
-            new_config = dialog.get_config()
-            self.config.update(new_config)
-            self.settings_changed.emit(new_config)
-            self.show_status_message("Настройки сохранены", 3000)
-
-    def _update_proxies(self) -> None:
-        """Обновление списка прокси"""
         try:
-            self._pending_operations += 1
-            self.proxy_handler.load_from_file()
-            self.proxy_updated.emit(self.proxy_handler.get_all_proxies())
-            self.show_status_message("Прокси обновлены", 2000)
+            from whatsapp_warmer.gui.dialogs import SettingsDialog
+            dialog = SettingsDialog(self.config, self)
+            if dialog.exec():
+                new_config = dialog.get_config()
+                self.config.update(new_config)
+                self.settings_changed.emit(new_config)
+
+                # Обновляем настройки движка, если он существует
+                if self.warming_engine and hasattr(self.warming_engine, 'update_settings'):
+                    self.warming_engine.update_settings(self.config.get('warming', {}))
+
         except Exception as e:
-            self.show_status_message("Ошибка обновления прокси", 5000)
-            logger.error(f"Proxy update failed: {str(e)}")
-        finally:
-            self._pending_operations -= 1
+            logger.error(f"Settings dialog error: {e}")
+            QMessageBox.critical(self, "Error", "Failed to open settings")
 
-    def _create_shortcut(self) -> None:
-        """Создание ярлыка на рабочем столе"""
-        if create_shortcut():
-            self.show_status_message("Ярлык создан успешно", 3000)
-        else:
-            self.show_status_message("Ошибка создания ярлыка", 3000)
-
-    def _check_updates(self) -> None:
-        """Проверка обновлений"""
-        self.show_status_message("Проверка обновлений...", 3000)
-        # Здесь должна быть логика проверки обновлений
-        QTimer.singleShot(2000, lambda: self.show_status_message("Доступна новая версия", 3000))
-
-    def _show_docs(self) -> None:
-        """Показ документации"""
-        QMessageBox.information(
-            self,
-            "Документация",
-            "Онлайн документация доступна на нашем сайте",
-            QMessageBox.StandardButton.Ok
-        )
-
-    def _show_about(self) -> None:
-        """Показ информации о программе"""
-        dialog = AboutDialog(self)
-        dialog.exec()
-
-    def _handle_account_update(self, account_data: Dict[str, Any]) -> None:
-        """Обработка обновления аккаунта"""
-        phone = account_data.get('phone', '')
-        self.show_status_message(f"Аккаунт {phone} обновлен", 3000)
-        self.logs_tab.add_log("Account", f"Updated {phone}")
-
-    def _handle_account_activity(self, phone: str, activity: str) -> None:
-        """Обработка активности аккаунта"""
-        message = f"{phone}: {activity}"
-        self.show_status_message(message, 3000)
-        self.logs_tab.add_log("Activity", message)
-
-    def _handle_warming_error(self, context: str, error: str) -> None:
-        """Обработка ошибок прогрева"""
-        message = f"{context}: {error}"
-        self.show_status_message(message, 5000)
-        self.logs_tab.add_log("Error", message, logging.ERROR)
-
-    def _handle_tray_activation(self, reason: QSystemTrayIcon.ActivationReason) -> None:
-        """Обработка активации иконки в трее"""
-        if reason == QSystemTrayIcon.ActivationReason.Trigger:
-            self.show_normal()
-
-    def show_status_message(self, message: str, timeout: int = 3000) -> None:
-        """Показать сообщение в статус-баре"""
+    def show_status_message(self, message: str, timeout: int = 3000):
+        """Показ сообщения в статусбаре"""
         self.status_bar.showMessage(message, timeout)
         logger.info(f"Status: {message}")
 
-    def show_normal(self) -> None:
-        """Показать окно в нормальном состоянии"""
+    def show_normal(self):
+        """Восстановление окна из трея"""
         self.show()
-        self.setWindowState(self.windowState() & ~Qt.WindowState.WindowMinimized)
         self.raise_()
         self.activateWindow()
 
-    def closeEvent(self, event: QCloseEvent) -> None:
+    def closeEvent(self, event: QCloseEvent):
         """Обработчик закрытия окна"""
         if self._pending_operations > 0:
             if not self._confirm_force_close():
@@ -330,14 +228,14 @@ class MainWindow(QMainWindow):
 
         # Остановка всех процессов
         self.auto_save_timer.stop()
-        if hasattr(self, 'warming_engine'):
+        if hasattr(self, 'warming_engine') and self.warming_engine:
             self.warming_engine.stop_warming()
 
         # Сворачивание в трей вместо закрытия
         if self.config.get('minimize_to_tray', False) and self.tray_icon:
             event.ignore()
             self.hide()
-            self.show_status_message("Приложение свернуто в трей", 2000)
+            self.show_status_message("Minimized to tray", 2000)
             return
 
         # Полное закрытие
@@ -349,17 +247,8 @@ class MainWindow(QMainWindow):
         """Подтверждение принудительного закрытия"""
         reply = QMessageBox.question(
             self,
-            "Операция в процессе",
-            "Идут операции сохранения. Закрыть приложение?",
+            "Operation in progress",
+            "Background operations are running. Close anyway?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         return reply == QMessageBox.StandardButton.Yes
-
-    def changeEvent(self, event) -> None:
-        """Обработчик изменения состояния окна"""
-        if event.type() == event.Type.WindowStateChange:
-            if self.isMinimized() and self.config.get('minimize_to_tray', False):
-                event.ignore()
-                self.hide()
-                self.show_status_message("Приложение свернуто в трей", 2000)
-        super().changeEvent(event)
