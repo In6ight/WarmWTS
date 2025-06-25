@@ -1,113 +1,76 @@
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
-import logging
+from datetime import datetime
+import random
 from whatsapp_warmer.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-
 @dataclass
 class ProxyConfig:
     """
-    Класс для хранения и управления конфигурацией прокси-сервера.
-    Поддерживает HTTP, SOCKS4 и SOCKS5 прокси с аутентификацией.
+    Конфигурация прокси-сервера для WhatsApp.
+    Поддерживает HTTP, SOCKS4, SOCKS5 с аутентификацией.
     """
     host: str
     port: int
-    type: str  # 'http', 'socks4', 'socks5'
+    protocol: str = "http"  # 'http', 'socks4', 'socks5'
     username: Optional[str] = None
     password: Optional[str] = None
     id: Optional[str] = None
+    last_used: Optional[datetime] = None
     is_active: bool = True
-    last_used: Optional[str] = None
+    fail_count: int = 0
 
     def __post_init__(self):
-        """Валидация параметров при инициализации"""
-        self._validate_proxy_type()
-        self._generate_id_if_needed()
-        self._normalize_type()
+        """Валидация при инициализации"""
+        self._validate_protocol()
+        self._generate_id()
+        self.protocol = self.protocol.lower()
 
-    def _validate_proxy_type(self):
-        """Проверка корректности типа прокси"""
-        valid_types = ['http', 'socks4', 'socks5', 'https']
-        if self.type.lower() not in valid_types:
-            raise ValueError(
-                f"Неподдерживаемый тип прокси: {self.type}. "
-                f"Допустимые типы: {', '.join(valid_types)}"
-            )
+    def _validate_protocol(self):
+        """Проверка поддерживаемых протоколов"""
+        if self.protocol.lower() not in ('http', 'socks4', 'socks5'):
+            raise ValueError(f"Неподдерживаемый протокол: {self.protocol}")
 
-    def _normalize_type(self):
-        """Приведение типа прокси к нижнему регистру"""
-        self.type = self.type.lower()
-
-    def _generate_id_if_needed(self):
-        """Генерация ID если не предоставлен"""
+    def _generate_id(self):
+        """Генерация уникального ID"""
         if not self.id:
-            self.id = f"{self.host}:{self.port}"
+            base = f"{self.protocol}_{self.host}_{self.port}"
+            self.id = base if not self.username else f"{base}_{self.username}"
+
+    @property
+    def connection_string(self) -> str:
+        """Строка подключения с аутентификацией"""
+        if self.username and self.password:
+            return f"{self.protocol}://{self.username}:{self.password}@{self.host}:{self.port}"
+        return f"{self.protocol}://{self.host}:{self.port}"
 
     def to_dict(self) -> Dict[str, Any]:
-        """
-        Сериализация конфигурации в словарь
-        Returns:
-            Словарь с параметрами прокси
-        """
+        """Сериализация в словарь"""
         return {
             'host': self.host,
             'port': self.port,
-            'type': self.type,
+            'protocol': self.protocol,
             'username': self.username,
             'password': self.password,
             'id': self.id,
+            'last_used': self.last_used.isoformat() if self.last_used else None,
             'is_active': self.is_active,
-            'last_used': self.last_used
+            'fail_count': self.fail_count
         }
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'ProxyConfig':
-        """
-        Десериализация конфигурации из словаря
-        Args:
-            data: Словарь с параметрами прокси
-        Returns:
-            Экземпляр ProxyConfig
-        """
+        """Десериализация из словаря"""
         return cls(
             host=data['host'],
-            port=int(data['port']),
-            type=data['type'],
+            port=data['port'],
+            protocol=data.get('protocol', 'http'),
             username=data.get('username'),
             password=data.get('password'),
             id=data.get('id'),
+            last_used=datetime.fromisoformat(data['last_used']) if data.get('last_used') else None,
             is_active=data.get('is_active', True),
-            last_used=data.get('last_used')
+            fail_count=data.get('fail_count', 0)
         )
-
-    def get_connection_string(self, masked: bool = False) -> str:
-        """
-        Получение строки подключения
-        Args:
-            masked: Скрывать ли пароль в строке подключения
-        Returns:
-            Строка подключения в формате type://user:pass@host:port
-        """
-        creds = ""
-        if self.username:
-            password = self.password if not masked else "***"
-            creds = f"{self.username}:{password}@"
-
-        return f"{self.type}://{creds}{self.host}:{self.port}"
-
-    def test_connection(self) -> bool:
-        """
-        Проверка работоспособности прокси (заглушка для реализации)
-        Returns:
-            bool: Результат проверки подключения
-        """
-        # Здесь должна быть реализация проверки прокси
-        # Например, попытка подключения к тестовому ресурсу
-        return True  # Заглушка для примера
-
-    def mark_as_used(self):
-        """Обновление времени последнего использования"""
-        from datetime import datetime
-        self.last_used = datetime.now().isoformat()

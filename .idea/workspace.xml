@@ -5,20 +5,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="95c1401d-64f6-498e-aea9-b905dc45d977" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/data/accounts.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/whatsapp_warmer/gui/dialogs.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/core/account_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/core/account_manager.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/whatsapp_warmer/core/models/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/core/models/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/whatsapp_warmer/core/models/proxy.py" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/core/models/proxy.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/core/utils/helpers.py" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/core/utils/helpers.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/core/warming_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/core/warming_engine.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/core/proxy_handler.py" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/core/proxy_handler.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/core/utils/helpers.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/gui/dialogs.py" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/gui/dialogs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/gui/tabs/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/gui/tabs/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/whatsapp_warmer/gui/tabs/accounts_tab.py" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/gui/tabs/accounts_tab.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/whatsapp_warmer/gui/window.py" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/gui/window.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/logs/app.log" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/logs/app.log" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/whatsapp_warmer/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/utils/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/utils/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/whatsapp_warmer/utils/logger.py" beforeDir="false" afterPath="$PROJECT_DIR$/whatsapp_warmer/utils/logger.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -58,6 +55,7 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+    &quot;Python.dialogs.executor&quot;: &quot;Run&quot;,
     &quot;Python.main.executor&quot;: &quot;Run&quot;,
     &quot;Python.main_window.executor&quot;: &quot;Run&quot;,
     &quot;Python.setup.executor&quot;: &quot;Run&quot;,

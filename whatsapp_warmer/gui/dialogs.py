@@ -3,21 +3,11 @@ from PyQt6.QtWidgets import (
     QDialogButtonBox, QMessageBox, QSpinBox
 )
 from PyQt6.QtCore import Qt
-from whatsapp_warmer.core.models.proxy import Proxy
 from whatsapp_warmer.utils.helpers import validate_phone
-from typing import Optional
-
+from typing import Optional, Dict, Any
 
 class AccountDialog(QDialog):
-    """Диалоговое окно для добавления/редактирования аккаунта"""
-
     def __init__(self, proxy_handler=None, parent=None, account=None):
-        """
-        Args:
-            proxy_handler: Обработчик прокси (опционально)
-            parent: Родительский виджет
-            account: Существующий аккаунт для редактирования (None для создания нового)
-        """
         super().__init__(parent)
         self.proxy_handler = proxy_handler
         self.account = account

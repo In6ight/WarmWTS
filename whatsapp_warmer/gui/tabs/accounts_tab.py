@@ -1,299 +1,293 @@
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
-    QTableWidget, QTableWidgetItem, QHeaderView,
-    QMessageBox, QLineEdit, QLabel, QComboBox,
-    QAbstractItemView, QInputDialog
-)
-from PyQt6.QtCore import Qt, pyqtSignal, QDateTime
-from whatsapp_warmer.utils.logger import get_logger
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTableWidget,
+                             QTableWidgetItem, QPushButton, QDialog, QMessageBox,
+                             QFormLayout, QLineEdit, QComboBox, QHeaderView,
+                             QAbstractItemView, QLabel, QInputDialog)
+from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
+from PyQt6.QtGui import QIcon
 from whatsapp_warmer.core.models.account import WhatsAppAccount
 from whatsapp_warmer.core.models.proxy import ProxyConfig
-from typing import Optional, List
-from datetime import datetime
+from whatsapp_warmer.utils.helpers import get_resource_path, validate_phone
+from whatsapp_warmer.utils.logger import get_logger
 
 logger = get_logger(__name__)
-
-
-class AccountsTab(QWidget):
-    """Полнофункциональная вкладка управления аккаунтами с поддержкой прокси"""
-
-    # Сигналы
-    account_added = pyqtSignal(dict)
-    account_updated = pyqtSignal(str, dict)
-    account_removed = pyqtSignal(str)
-    proxy_changed = pyqtSignal(str, object)
-
-    def __init__(self, account_manager, proxy_handler=None):
-        super().__init__()
-        self.logger = logger.getChild('AccountsTab')
-        self.account_manager = account_manager
-        self.proxy_handler = proxy_handler
-
-        self._init_ui()
-        self._setup_context_menu()
-        self._load_accounts()
-
-        # Обновляем список при изменении данных
-        self.account_manager.accounts_changed.connect(self._load_accounts)
-
-    def _init_ui(self):
-        """Инициализация основного интерфейса"""
-        main_layout = QVBoxLayout()
-        self.setLayout(main_layout)
-
-        # Панель инструментов
-        toolbar = QHBoxLayout()
-
-        self.add_btn = QPushButton("➕ Добавить")
-        self.add_btn.clicked.connect(self._show_add_dialog)
-        toolbar.addWidget(self.add_btn)
-
-        self.import_btn = QPushButton("📁 Импорт")
-        self.import_btn.clicked.connect(self._import_accounts)
-        toolbar.addWidget(self.import_btn)
-
-        self.export_btn = QPushButton("📤 Экспорт")
-        self.export_btn.clicked.connect(self._export_accounts)
-        toolbar.addWidget(self.export_btn)
-
-        main_layout.addLayout(toolbar)
-
-        # Таблица аккаунтов
-        self.table = QTableWidget()
-        self.table.setColumnCount(6)
-        self.table.setHorizontalHeaderLabels([
-            "ID", "Номер", "Статус", "Прокси", "Активность", "Действия"
-        ])
-        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        self.table.verticalHeader().setVisible(False)
-        main_layout.addWidget(self.table)
-
-    def _setup_context_menu(self):
-        """Настройка контекстного меню для таблицы"""
-        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.table.customContextMenuRequested.connect(self._show_context_menu)
-
-    def _load_accounts(self):
-        """Загрузка и отображение аккаунтов в таблице"""
-        self.table.setRowCount(0)
-
-        for account in self.account_manager.get_all_accounts():
-            row = self.table.rowCount()
-            self.table.insertRow(row)
-
-            # Заполняем данные
-            self._fill_account_row(row, account)
-
-    def _fill_account_row(self, row: int, account: WhatsAppAccount):
-        """Заполнение строки таблицы данными аккаунта"""
-        # ID
-        self.table.setItem(row, 0, QTableWidgetItem(str(account.id)))
-
-        # Номер телефона
-        phone_item = QTableWidgetItem(account.phone)
-        phone_item.setData(Qt.ItemDataRole.UserRole, account.id)
-        self.table.setItem(row, 1, phone_item)
-
-        # Статус
-        status_item = QTableWidgetItem()
-        status_item.setText("✅ Активен" if account.enabled else "❌ Неактивен")
-        status_item.setForeground(Qt.GlobalColor.darkGreen if account.enabled else Qt.GlobalColor.red)
-        self.table.setItem(row, 2, status_item)
-
-        # Прокси
-        proxy_text = f"{account.proxy.host}:{account.proxy.port}" if account.proxy else "Нет"
-        self.table.setItem(row, 3, QTableWidgetItem(proxy_text))
-
-        # Активность
-        last_active = account.last_active.strftime("%d.%m.%Y %H:%M") if account.last_active else "Никогда"
-        self.table.setItem(row, 4, QTableWidgetItem(last_active))
-
-        # Кнопки действий
-        action_widget = QWidget()
-        action_layout = QHBoxLayout()
-        action_widget.setLayout(action_layout)
-
-        edit_btn = QPushButton("✏️")
-        edit_btn.clicked.connect(lambda: self._edit_account(account.id))
-        action_layout.addWidget(edit_btn)
-
-        toggle_btn = QPushButton("🔄")
-        toggle_btn.clicked.connect(lambda: self._toggle_account(account.id))
-        action_layout.addWidget(toggle_btn)
-
-        remove_btn = QPushButton("🗑️")
-        remove_btn.clicked.connect(lambda: self._remove_account(account.id))
-        action_layout.addWidget(remove_btn)
-
-        self.table.setCellWidget(row, 5, action_widget)
-
-    def _show_add_dialog(self):
-        """Диалог добавления нового аккаунта"""
-        dialog = AccountDialog(self.account_manager, self.proxy_handler, self)
-        if dialog.exec():
-            account_data = dialog.get_account_data()
-            try:
-                self.account_manager.add_account(account_data)
-                self.account_added.emit(account_data)
-            except Exception as e:
-                self._show_error(f"Ошибка добавления: {str(e)}")
-
-    def _edit_account(self, account_id: str):
-        """Редактирование существующего аккаунта"""
-        account = self.account_manager.get_account(account_id)
-        if not account:
-            return
-
-        dialog = AccountDialog(
-            self.account_manager,
-            self.proxy_handler,
-            self,
-            edit_mode=True,
-            account=account
-        )
-
-        if dialog.exec():
-            updated_data = dialog.get_account_data()
-            try:
-                self.account_manager.update_account(account_id, updated_data)
-                self.account_updated.emit(account_id, updated_data)
-            except Exception as e:
-                self._show_error(f"Ошибка обновления: {str(e)}")
-
-    def _toggle_account(self, account_id: str):
-        """Переключение статуса аккаунта"""
-        try:
-            account = self.account_manager.get_account(account_id)
-            if account:
-                account.enabled = not account.enabled
-                account.last_updated = datetime.now()
-                self.account_manager.save_to_file()
-                self._load_accounts()
-        except Exception as e:
-            self._show_error(f"Ошибка переключения: {str(e)}")
-
-    def _remove_account(self, account_id: str):
-        """Удаление аккаунта с подтверждением"""
-        reply = QMessageBox.question(
-            self,
-            "Подтверждение",
-            "Вы уверены, что хотите удалить этот аккаунт?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
-
-        if reply == QMessageBox.StandardButton.Yes:
-            try:
-                self.account_manager.remove_account(account_id)
-                self.account_removed.emit(account_id)
-            except Exception as e:
-                self._show_error(f"Ошибка удаления: {str(e)}")
-
-    def _show_context_menu(self, position):
-        """Показ контекстного меню"""
-        menu = QMenu()
-
-        selected_row = self.table.rowAt(position.y())
-        if selected_row >= 0:
-            account_id = self.table.item(selected_row, 0).text()
-
-            edit_action = menu.addAction("Редактировать")
-            edit_action.triggered.connect(lambda: self._edit_account(account_id))
-
-            toggle_action = menu.addAction("Вкл/Выкл")
-            toggle_action.triggered.connect(lambda: self._toggle_account(account_id))
-
-            remove_action = menu.addAction("Удалить")
-            remove_action.triggered.connect(lambda: self._remove_account(account_id))
-
-            menu.addSeparator()
-
-        refresh_action = menu.addAction("Обновить список")
-        refresh_action.triggered.connect(self._load_accounts)
-
-        menu.exec(self.table.viewport().mapToGlobal(position))
-
-    def _import_accounts(self):
-        """Импорт аккаунтов из файла"""
-        # Реализация импорта...
-        pass
-
-    def _export_accounts(self):
-        """Экспорт аккаунтов в файл"""
-        # Реализация экспорта...
-        pass
-
-    def _show_error(self, message: str):
-        """Показ сообщения об ошибке"""
-        QMessageBox.critical(self, "Ошибка", message)
-        self.logger.error(message)
 
 
 class AccountDialog(QDialog):
     """Диалоговое окно для добавления/редактирования аккаунта"""
 
-    def __init__(self, account_manager, proxy_handler=None, parent=None, edit_mode=False, account=None):
+    account_saved = pyqtSignal(dict)
+
+    def __init__(self, account_data=None, proxy_list=None, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Добавить аккаунт" if not account_data else "Редактировать аккаунт")
+        self.setModal(True)
+        self.setFixedSize(400, 350)
+
+        self.account_data = account_data or {}
+        self.proxy_list = proxy_list or []
+        self._init_ui()
+        self._load_account_data()
+
+    def _init_ui(self):
+        """Инициализация интерфейса"""
+        layout = QVBoxLayout()
+        form_layout = QFormLayout()
+
+        # Поля формы
+        self.phone_edit = QLineEdit()
+        self.phone_edit.setPlaceholderText("79123456789")
+        form_layout.addRow("Номер телефона:", self.phone_edit)
+
+        # Выбор прокси
+        self.proxy_combo = QComboBox()
+        self.proxy_combo.addItem("Без прокси", None)
+        for proxy in self.proxy_list:
+            self.proxy_combo.addItem(
+                f"{proxy.host}:{proxy.port} ({proxy.protocol})",
+                proxy
+            )
+        form_layout.addRow("Прокси:", self.proxy_combo)
+
+        # Кнопки
+        self.save_btn = QPushButton("Сохранить")
+        self.save_btn.clicked.connect(self._save_account)
+        self.cancel_btn = QPushButton("Отмена")
+        self.cancel_btn.clicked.connect(self.reject)
+
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.save_btn)
+        button_layout.addWidget(self.cancel_btn)
+
+        layout.addLayout(form_layout)
+        layout.addLayout(button_layout)
+        self.setLayout(layout)
+
+    def _load_account_data(self):
+        """Загрузка данных аккаунта в форму"""
+        if self.account_data:
+            self.phone_edit.setText(self.account_data.get('phone', ''))
+
+            # Установка выбранного прокси
+            if 'proxy' in self.account_data and self.account_data['proxy']:
+                for i in range(self.proxy_combo.count()):
+                    proxy_data = self.proxy_combo.itemData(i)
+                    if (proxy_data and
+                            proxy_data.host == self.account_data['proxy']['host'] and
+                            proxy_data.port == self.account_data['proxy']['port']):
+                        self.proxy_combo.setCurrentIndex(i)
+                        break
+
+    def _save_account(self):
+        """Сохранение данных аккаунта"""
+        phone = self.phone_edit.text().strip()
+
+        if not validate_phone(phone):
+            QMessageBox.warning(self, "Ошибка", "Неверный формат номера телефона")
+            return
+
+        proxy = self.proxy_combo.currentData()
+
+        account_data = {
+            'phone': phone,
+            'proxy': proxy.to_dict() if proxy else None
+        }
+
+        self.account_saved.emit(account_data)
+        self.accept()
+
+
+class AccountsTab(QWidget):
+    """Вкладка для управления аккаунтами"""
+
+    account_added = pyqtSignal()
+    account_removed = pyqtSignal()
+    account_updated = pyqtSignal(dict)
+
+    def __init__(self, account_manager, proxy_handler, parent=None):
         super().__init__(parent)
         self.account_manager = account_manager
         self.proxy_handler = proxy_handler
-        self.edit_mode = edit_mode
-        self.account = account
-
         self._init_ui()
+        self._load_accounts()
 
     def _init_ui(self):
-        """Инициализация интерфейса диалога"""
-        self.setWindowTitle("Редактировать аккаунт" if self.edit_mode else "Добавить аккаунт")
-        layout = QFormLayout()
-        self.setLayout(layout)
+        """Инициализация интерфейса"""
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
 
-        # Поле номера телефона
-        self.phone_edit = QLineEdit()
-        self.phone_edit.setPlaceholderText("79XXXXXXXXX")
-        if self.edit_mode and self.account:
-            self.phone_edit.setText(self.account.phone)
-            self.phone_edit.setEnabled(False)  # Нельзя менять номер при редактировании
-        layout.addRow("Номер телефона:", self.phone_edit)
+        # Таблица аккаунтов
+        self.accounts_table = QTableWidget()
+        self.accounts_table.setColumnCount(4)
+        self.accounts_table.setHorizontalHeaderLabels([
+            "Номер телефона",
+            "Прокси",
+            "Статус",
+            "Действия"
+        ])
+        self.accounts_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.accounts_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.accounts_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
-        # Выбор прокси
-        if self.proxy_handler:
-            self.proxy_combo = QComboBox()
-            self._load_proxies()
-            layout.addRow("Прокси:", self.proxy_combo)
+        # Кнопки управления
+        self.add_btn = QPushButton("Добавить аккаунт")
+        self.add_btn.setIcon(create_qt_icon('add.png'))
+        self.add_btn.clicked.connect(self._add_account)
 
-        # Кнопки
-        btn_box = QDialogButtonBox()
-        btn_box.addButton("Сохранить", QDialogButtonBox.ButtonRole.AcceptRole)
-        btn_box.addButton("Отмена", QDialogButtonBox.ButtonRole.RejectRole)
-        btn_box.accepted.connect(self.accept)
-        btn_box.rejected.connect(self.reject)
-        layout.addRow(btn_box)
+        self.remove_btn = QPushButton("Удалить выбранное")
+        self.remove_btn.setIcon(QIcon(get_resource_path('icons/remove.png')))
+        self.remove_btn.clicked.connect(self._remove_account)
+        self.remove_btn.setEnabled(False)
 
-    def _load_proxies(self):
-        """Загрузка списка прокси в комбобокс"""
-        self.proxy_combo.clear()
-        self.proxy_combo.addItem("Без прокси", None)
+        # Расположение элементов
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.add_btn)
+        button_layout.addWidget(self.remove_btn)
+        button_layout.addStretch()
 
-        for proxy in self.proxy_handler.get_all_proxies():
-            self.proxy_combo.addItem(
-                f"{proxy.host}:{proxy.port} ({proxy.type})",
-                proxy
+        self.layout.addWidget(self.accounts_table)
+        self.layout.addLayout(button_layout)
+
+        # Обработчики событий
+        self.accounts_table.itemSelectionChanged.connect(
+            lambda: self.remove_btn.setEnabled(len(self.accounts_table.selectedItems()) > 0)
+        )
+
+    def _load_accounts(self):
+        """Загрузка аккаунтов в таблицу"""
+        self.accounts_table.setRowCount(0)
+
+        for account in self.account_manager.get_all_accounts():
+            self._add_account_to_table(account)
+
+    def _add_account_to_table(self, account):
+        """Добавление аккаунта в таблицу"""
+        row = self.accounts_table.rowCount()
+        self.accounts_table.insertRow(row)
+
+        # Номер телефона
+        phone_item = QTableWidgetItem(account.phone)
+        phone_item.setData(Qt.ItemDataRole.UserRole, account.phone)
+        self.accounts_table.setItem(row, 0, phone_item)
+
+        # Прокси
+        proxy_text = "Без прокси"
+        if account.proxy:
+            proxy_text = f"{account.proxy.host}:{account.proxy.port}"
+        self.accounts_table.setItem(row, 1, QTableWidgetItem(proxy_text))
+
+        # Статус
+        status_item = QTableWidgetItem("Активен" if account.enabled else "Неактивен")
+        status_item.setForeground(Qt.GlobalColor.green if account.enabled else Qt.GlobalColor.red)
+        self.accounts_table.setItem(row, 2, status_item)
+
+        # Кнопки действий
+        action_widget = QWidget()
+        action_layout = QHBoxLayout()
+        action_layout.setContentsMargins(0, 0, 0, 0)
+
+        edit_btn = QPushButton()
+        edit_btn.setIcon(QIcon(get_resource_path('icons/edit.png')))
+        edit_btn.setToolTip("Редактировать")
+        edit_btn.clicked.connect(lambda: self._edit_account(row))
+
+        toggle_btn = QPushButton()
+        toggle_btn.setIcon(QIcon(get_resource_path('icons/toggle.png')))
+        toggle_btn.setToolTip("Активировать/Деактивировать")
+        toggle_btn.clicked.connect(lambda: self._toggle_account(row))
+
+        action_layout.addWidget(edit_btn)
+        action_layout.addWidget(toggle_btn)
+        action_widget.setLayout(action_layout)
+
+        self.accounts_table.setCellWidget(row, 3, action_widget)
+
+    def _add_account(self):
+        """Добавление нового аккаунта"""
+        dialog = AccountDialog(proxy_list=self.proxy_handler.get_all_proxies(), parent=self)
+        dialog.account_saved.connect(self._handle_account_save)
+        dialog.exec()
+
+    def _edit_account(self, row):
+        """Редактирование существующего аккаунта"""
+        phone = self.accounts_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
+        account = self.account_manager.get_account(phone)
+
+        if account:
+            dialog = AccountDialog(
+                account_data={
+                    'phone': account.phone,
+                    'proxy': account.proxy.to_dict() if account.proxy else None
+                },
+                proxy_list=self.proxy_handler.get_all_proxies(),
+                parent=self
             )
+            dialog.account_saved.connect(self._handle_account_update)
+            dialog.exec()
 
-        if self.edit_mode and self.account and self.account.proxy:
-            index = self.proxy_combo.findData(self.account.proxy)
-            if index >= 0:
-                self.proxy_combo.setCurrentIndex(index)
+    def _toggle_account(self, row):
+        """Активация/деактивация аккаунта"""
+        phone = self.accounts_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
+        account = self.account_manager.get_account(phone)
 
-    def get_account_data(self) -> dict:
-        """Получение данных аккаунта из формы"""
-        data = {
-            'phone': self.phone_edit.text().strip(),
-            'enabled': True
-        }
+        if account:
+            account.enabled = not account.enabled
+            self._load_accounts()
+            self.account_updated.emit({'phone': phone, 'enabled': account.enabled})
 
-        if self.proxy_handler:
-            data['proxy'] = self.proxy_combo.currentData()
+    def _remove_account(self):
+        """Удаление выбранных аккаунтов"""
+        selected_rows = set(index.row() for index in self.accounts_table.selectedIndexes())
 
-        return data
+        if not selected_rows:
+            return
+
+        reply = QMessageBox.question(
+            self,
+            "Подтверждение",
+            f"Удалить {len(selected_rows)} аккаунт(ов)?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            for row in selected_rows:
+                phone = self.accounts_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
+                self.account_manager.remove_account(phone)
+                self.account_removed.emit()
+
+            self._load_accounts()
+
+    @pyqtSlot(dict)
+    def _handle_account_save(self, account_data):
+        """Обработка сохранения нового аккаунта"""
+        proxy = None
+        if account_data['proxy']:
+            proxy = ProxyConfig(**account_data['proxy'])
+
+        account = WhatsAppAccount(
+            phone=account_data['phone'],
+            proxy=proxy
+        )
+
+        if self.account_manager.add_account(account):
+            self._load_accounts()
+            self.account_added.emit()
+
+    @pyqtSlot(dict)
+    def _handle_account_update(self, account_data):
+        """Обработка обновления аккаунта"""
+        phone = account_data['phone']
+        account = self.account_manager.get_account(phone)
+
+        if account:
+            proxy = None
+            if account_data['proxy']:
+                proxy = ProxyConfig(**account_data['proxy'])
+
+            account.proxy = proxy
+            self._load_accounts()
+            self.account_updated.emit(account_data)
+
+    def update_proxy_list(self, proxies):
+        """Обновление списка прокси (для внешних вызовов)"""
+        # В текущей реализации прокси обновляются при открытии диалога
+        pass
